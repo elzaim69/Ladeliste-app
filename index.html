@@ -46,8 +46,9 @@
       <thead>
         <tr>
           <th>Datum</th>
-          <th>Sendungsnummer</th>
+          <th>Absender</th>
           <th>Versanddienstleister</th>
+          <th>Paketnummer</th>
           <th>Empfänger</th>
         </tr>
       </thead>
@@ -73,7 +74,7 @@
       data.push({ datum, sn, dl, empfaenger });
 
       const row = document.createElement("tr");
-      row.innerHTML = `<td>${datum}</td><td>${sn}</td><td>${dl}</td><td>${empfaenger}</td>`;
+      row.innerHTML = `<td>${datum}</td><td>ACTEC GmbH</td><td>${dl}</td><td>${sn}</td><td>${empfaenger}</td>`;
       listBody.appendChild(row);
       document.getElementById("sendungsnummer").value = "";
       document.getElementById("empfaenger").value = "";
@@ -82,16 +83,23 @@
     async function generatePDF() {
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
-      doc.setFontSize(14);
-      doc.text("AC TEC GmbH", 10, 10);
-      doc.setFontSize(12);
-      doc.text("Ladeliste", 10, 20);
 
-      let y = 30;
-      doc.setFontSize(10);
-      data.forEach((entry, index) => {
-        doc.text(`${entry.datum} | ${entry.sn} | ${entry.dl} | ${entry.empfaenger}`, 10, y);
-        y += 8;
+      doc.setFontSize(14);
+      doc.text("ACTEC GmbH", 105, 15, null, null, "center");
+      doc.setTextColor(200, 0, 0);
+      doc.setFontSize(16);
+      doc.text("Ladeliste", 105, 25, null, null, "center");
+      doc.setTextColor(0, 0, 0);
+
+      const headers = [["DATUM", "Absender", "Versanddienstleister", "Paketnummer", "Empfänger"]];
+      const rows = data.map(entry => [entry.datum, "ACTEC GmbH", entry.dl, entry.sn, entry.empfaenger]);
+
+      doc.autoTable({
+        head: headers,
+        body: rows,
+        startY: 35,
+        styles: { fontSize: 10, cellPadding: 3 },
+        headStyles: { fillColor: [255, 229, 229], textColor: [0, 0, 0] }
       });
 
       const filename = `ladeliste_${new Date().toISOString().split('T')[0]}.pdf`;
@@ -127,5 +135,6 @@
       });
     }
   </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
 </body>
 </html>
