@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ladeliste Scanner</title>
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   <style>
     body { font-family: sans-serif; background: #f5f7fa; padding: 20px; }
     .container { max-width: 500px; margin: auto; background: white; border-radius: 12px; padding: 20px; box-shadow: 0 0 20px rgba(0,0,0,0.05); }
@@ -13,11 +14,15 @@
     th, td { text-align: left; padding: 8px; border-bottom: 1px solid #eee; }
     .btn-main { background: #2b67f6; color: white; border: none; cursor: pointer; }
     .btn-main:hover { background: #1c4ec4; }
+    #reader { width: 100%; margin-top: 20px; display: none; }
   </style>
 </head>
 <body>
   <div class="container">
     <h2>Sendungsnummer scannen</h2>
+
+    <button class="btn-main" onclick="toggleScanner()">📷 Kamera aktivieren / deaktivieren</button>
+    <div id="reader"></div>
 
     <label>Sendungsnummer:</label>
     <input type="text" id="sendungsnummer" placeholder="Barcode hier scannen oder eingeben">
@@ -47,6 +52,8 @@
   <script>
     const listBody = document.querySelector("#list tbody");
     const data = [];
+    let html5QrCode;
+    let scannerRunning = false;
 
     function addEntry() {
       const sn = document.getElementById("sendungsnummer").value.trim();
@@ -75,6 +82,35 @@
 
       const filename = `ladeliste_${new Date().toISOString().split('T')[0]}.pdf`;
       doc.save(filename);
+    }
+
+    function toggleScanner() {
+      const readerElem = document.getElementById("reader");
+      if (scannerRunning) {
+        html5QrCode.stop().then(() => {
+          readerElem.style.display = "none";
+          scannerRunning = false;
+        });
+        return;
+      }
+
+      html5QrCode = new Html5Qrcode("reader");
+      readerElem.style.display = "block";
+      html5QrCode.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: 250 },
+        (decodedText, decodedResult) => {
+          document.getElementById("sendungsnummer").value = decodedText;
+          toggleScanner();
+        },
+        (errorMessage) => {
+          // Ignore scan errors
+        }
+      ).then(() => {
+        scannerRunning = true;
+      }).catch(err => {
+        alert("Kamera konnte nicht gestartet werden: " + err);
+      });
     }
   </script>
 </body>
