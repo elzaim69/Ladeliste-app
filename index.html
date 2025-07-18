@@ -65,6 +65,7 @@
     const data = [];
     let html5QrCode;
     let scannerRunning = false;
+    let scanTarget = "sendungsnummer"; // standardmäßig Paketnummer
 
     function addEntry() {
       const sn = document.getElementById("sendungsnummer").value.trim();
@@ -127,7 +128,13 @@
         { facingMode: "environment" },
         { fps: 10, qrbox: 250 },
         (decodedText, decodedResult) => {
-          document.getElementById("sendungsnummer").value = decodedText;
+          if (decodedText.includes("|")) {
+            const parts = decodedText.split("|");
+            document.getElementById("sendungsnummer").value = parts[0] || "";
+            document.getElementById("empfaenger").value = parts[1] || "";
+          } else {
+            document.getElementById(scanTarget).value = decodedText;
+          }
           toggleScanner();
         },
         (errorMessage) => {
