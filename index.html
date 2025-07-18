@@ -22,7 +22,8 @@
   <div class="container">
     <h2>Ladeliste scannen</h2>
 
-    <button class="btn-main" onclick="toggleScanner()">📷 Kamera aktivieren / deaktivieren</button>
+    <button class="btn-main" onclick="startScanner('sendungsnummer')">📦 Paketnummer scannen</button>
+    <button class="btn-main" onclick="startScanner('empfaenger')">🧾 Empfängername scannen</button>
     <div id="reader"></div>
 
     <label>Sendungsnummer:</label>
@@ -65,7 +66,7 @@
     const data = [];
     let html5QrCode;
     let scannerRunning = false;
-    let scanTarget = "sendungsnummer"; // standardmäßig Paketnummer
+    let scanTarget = "sendungsnummer";
 
     function addEntry() {
       const sn = document.getElementById("sendungsnummer").value.trim();
@@ -84,7 +85,6 @@
 
     function generatePDF() {
       const doc = new window.jspdf.jsPDF();
-
       doc.setFontSize(14);
       doc.text("ACTEC GmbH", 105, 15, null, null, "center");
       doc.setTextColor(200, 0, 0);
@@ -112,12 +112,13 @@
       doc.save(filename);
     }
 
-    function toggleScanner() {
+    function startScanner(fieldId) {
+      scanTarget = fieldId;
       const readerElem = document.getElementById("reader");
       if (scannerRunning) {
         html5QrCode.stop().then(() => {
-          readerElem.style.display = "none";
           scannerRunning = false;
+          readerElem.style.display = "none";
         });
         return;
       }
@@ -128,18 +129,10 @@
         { facingMode: "environment" },
         { fps: 10, qrbox: 250 },
         (decodedText, decodedResult) => {
-          if (decodedText.includes("|")) {
-            const parts = decodedText.split("|");
-            document.getElementById("sendungsnummer").value = parts[0] || "";
-            document.getElementById("empfaenger").value = parts[1] || "";
-          } else {
-            document.getElementById(scanTarget).value = decodedText;
-          }
-          toggleScanner();
+          document.getElementById(scanTarget).value = decodedText;
+          startScanner();
         },
-        (errorMessage) => {
-          // Fehler ignorieren
-        }
+        (errorMessage) => {}
       ).then(() => {
         scannerRunning = true;
       }).catch(err => {
