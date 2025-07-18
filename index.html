@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ladeliste Scanner</title>
+  <style>
+    body { font-family: sans-serif; background: #f5f7fa; padding: 20px; }
+    .container { max-width: 500px; margin: auto; background: white; border-radius: 12px; padding: 20px; box-shadow: 0 0 20px rgba(0,0,0,0.05); }
+    h2 { text-align: center; margin-bottom: 20px; }
+    button, select, input { font-size: 16px; margin: 10px 0; width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { text-align: left; padding: 8px; border-bottom: 1px solid #eee; }
+    .btn-main { background: #2b67f6; color: white; border: none; cursor: pointer; }
+    .btn-main:hover { background: #1c4ec4; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Sendungsnummer scannen</h2>
+
+    <label>Sendungsnummer:</label>
+    <input type="text" id="sendungsnummer" placeholder="Barcode hier scannen oder eingeben">
+
+    <label>Versanddienstleister:</label>
+    <select id="dienstleister">
+      <option value="DHL">DHL</option>
+      <option value="DPD">DPD</option>
+      <option value="GLS">GLS</option>
+      <option value="UPS">UPS</option>
+      <option value="Schenker">DB Schenker</option>
+    </select>
+
+    <button class="btn-main" onclick="addEntry()">Hinzufügen</button>
+
+    <table id="list">
+      <thead>
+        <tr><th>Datum</th><th>Sendungsnummer</th><th>Versanddienstleister</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <button class="btn-main" onclick="generatePDF()">Ladeliste abschließen</button>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script>
+    const listBody = document.querySelector("#list tbody");
+    const data = [];
+
+    function addEntry() {
+      const sn = document.getElementById("sendungsnummer").value.trim();
+      const dl = document.getElementById("dienstleister").value;
+      const datum = new Date().toLocaleDateString("de-DE");
+      if (!sn) return alert("Bitte Sendungsnummer eingeben");
+      data.push({ datum, sn, dl });
+
+      const row = document.createElement("tr");
+      row.innerHTML = `<td>${datum}</td><td>${sn}</td><td>${dl}</td>`;
+      listBody.appendChild(row);
+      document.getElementById("sendungsnummer").value = "";
+    }
+
+    async function generatePDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      doc.text("Ladeliste", 10, 10);
+
+      let y = 20;
+      doc.setFontSize(10);
+      data.forEach((entry, index) => {
+        doc.text(`${entry.datum} | ${entry.sn} | ${entry.dl}`, 10, y);
+        y += 8;
+      });
+
+      const filename = `ladeliste_${new Date().toISOString().split('T')[0]}.pdf`;
+      doc.save(filename);
+    }
+  </script>
+</body>
+</html>
